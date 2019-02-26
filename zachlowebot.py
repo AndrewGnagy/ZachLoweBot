@@ -4,6 +4,7 @@ import re
 import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
     found_ids = re.findall(r"id\/([0-9]+)\/", url_to_check)
@@ -16,7 +17,11 @@ def valid_and_not_already_posted(url_to_check, other_links):
     return True
 
 # Doing a headless browser, because that's neat
-browser = webdriver.PhantomJS()
+#browser = webdriver.PhantomJS()
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+browser = webdriver.Chrome(chrome_options=options)
 
 # Go to ESPNs search page for "lowe"
 browser.get('http://www.espn.com/search/results?q=lowe#gsc.tab=0&gsc.q=lowe')
@@ -25,9 +30,9 @@ assert 'ESPN' in browser.title
 # Grab links
 links = browser.find_elements_by_css_selector('#main-container table.gsc-table-result a.gs-title')
 
-# I'll just look at the first 3 to keep it recent
+# I'll just look at the first 2 to keep it recent
 valid_links = []
-for i, a in enumerate(links[:3]):
+for i, a in enumerate(links[:2]):
     print(i, a.text, a.get_attribute("href"))
     # Only stories, no dumb videos
     if ("/story/" in a.get_attribute("href")):
@@ -40,7 +45,8 @@ subreddit = reddit.subreddit("zachlowe")
 
 # Get existing links in r/zachlowe
 existing_links = []
-for i, submission in enumerate(subreddit.new(limit=25)):
+# Only need a few. Honestly ZachLoweBot is about the only poster
+for i, submission in enumerate(subreddit.new(limit=10)):
     print(i, submission.title, submission.url)
     existing_links.append({'url': submission.url, 'title': submission.title})
 
@@ -55,5 +61,5 @@ for link in links_to_post:
     # Wait 5 seconds in case Reddit api is slow
     time.sleep(5)
     # Comment on newly posted submission
-    comment = submission.reply('This post was generated automatically by ZachLoweBot')
+    comment = submission.reply('This post was generated automatically by [ZachLoweBot](https://github.com/AndrewGnagy/ZachLoweBot)')
     comment.mod.distinguish(sticky=True)
