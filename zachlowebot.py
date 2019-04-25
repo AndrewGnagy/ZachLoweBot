@@ -9,12 +9,16 @@ from selenium.webdriver.chrome.options import Options
 def valid_and_not_already_posted(url_to_check, other_links):
     found_ids = re.findall(r"id\/([0-9]+)\/", url_to_check)
     if len(found_ids) != 1:
-        return False
+        found_ids = re.findall(r"play\?id=([0-9]+)", url_to_check)
+        if len(found_ids) != 1:
+            return False
     found_id = found_ids[0]
     for links in other_links:
         if found_id in links['url']:
             return False
     return True
+
+print('Starting ZachLoweBot')
 
 # Doing a headless browser, because that's neat
 #browser = webdriver.PhantomJS()
@@ -35,8 +39,18 @@ valid_links = []
 for i, a in enumerate(links[:2]):
     print(i, a.text, a.get_attribute("href"))
     # Only stories, no dumb videos
-    if ("/story/" in a.get_attribute("href")):
+    if ("/story/" in a.get_attribute("href") and "nba" in a.get_attribute("href")):
         valid_links.append({'url': a.get_attribute("href"), 'title': a.text})
+
+# Grab LowePost links
+browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
+assert 'PodCenter' in browser.title
+links = browser.find_elements_by_css_selector('.arclist-item')
+for i, listItem in enumerate(links[:2]):
+    linkTag = listItem.find_element_by_css_selector('.arclist-play a:first-child')
+    linkText = listItem.find_element_by_css_selector('h2')
+    print(i, linkText.text, linkTag.get_attribute("href"))
+    valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post - ' + linkText.text})
 
 #print(valid_links)
 
