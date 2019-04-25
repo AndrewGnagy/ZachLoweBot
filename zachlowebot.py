@@ -8,10 +8,10 @@ from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
     found_ids = re.findall(r"id\/([0-9]+)\/", url_to_check)
+    found_ids += re.findall(r"zachlowe([0-9]+)\/", url_to_check)
+    found_ids += re.findall(r"play\?id=([0-9]+)", url_to_check)
     if len(found_ids) != 1:
-        found_ids = re.findall(r"play\?id=([0-9]+)", url_to_check)
-        if len(found_ids) != 1:
-            return False
+        return False
     found_id = found_ids[0]
     for links in other_links:
         if found_id in links['url']:
