@@ -32,7 +32,9 @@ browser.get('http://www.espn.com/search/results?q=lowe#gsc.tab=0&gsc.q=lowe')
 assert 'ESPN' in browser.title
 
 # Grab links
-links = browser.find_elements_by_css_selector('#main-container table.gsc-table-result a.gs-title')
+links = browser.find_elements_by_css_selector('.gsc-expansionArea .gsc-table-result a.gs-title')
+print('Grabbing espn links')
+print(len(links))
 
 # I'll just look at the first 2 to keep it recent
 valid_links = []
