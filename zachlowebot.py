@@ -28,21 +28,35 @@ options.add_argument('--disable-gpu')
 browser = webdriver.Chrome(chrome_options=options)
 
 # Go to ESPNs search page for "lowe"
-browser.get('http://www.espn.com/search/results?q=lowe#gsc.tab=0&gsc.q=lowe')
+browser.get('http://www.espn.com/search/results?q=lowe#gsc.tab=0&gsc.q=zach lowe')
 assert 'ESPN' in browser.title
 
 # Grab links
-links = browser.find_elements_by_css_selector('.gsc-expansionArea .gsc-table-result a.gs-title')
+links = browser.find_elements_by_css_selector('.gsc-webResult .gsc-table-result a.gs-title')
 print('Grabbing espn links')
 print(len(links))
 
 # I'll just look at the first 2 to keep it recent
 valid_links = []
+verify_links = []
 for i, a in enumerate(links[:2]):
     print(i, a.text, a.get_attribute("href"))
     # Only stories, no dumb videos
     if ("/story/" in a.get_attribute("href") and "nba" in a.get_attribute("href")):
-        valid_links.append({'url': a.get_attribute("href"), 'title': a.text})
+        if "Lowe:" not in a.text:
+            #Lowe not in title, verify further
+            verify_links.append(a)
+        else:
+            valid_links.append({'url': a.get_attribute("href"), 'title': a.text})
+
+#Verify that Zach is the actual author
+for link in verify_links:
+    browser.get(link.get_attribute("href"))
+    authors = browser.find_elements_by_css_selector('#article-feed .author')
+    if len(authors) > 0 and "Zach Lowe" in authors[0].text:
+        valid_links.append({'url': link.get_attribute("href"), 'title': link.text})
+    else:
+        print("Link was not written by Zach Lowe. ESPN improperly tagged it.")
 
 # Grab LowePost links
 browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
@@ -69,7 +83,9 @@ for i, submission in enumerate(subreddit.new(limit=10)):
 # Check so we dont re-post and existing link
 # Neat idiomatic python bit! (I think)
 links_to_post = [new_link for new_link in valid_links if valid_and_not_already_posted(new_link['url'], existing_links)]
+print("Posting:")
 print(links_to_post)
+
 
 # Submit the posts
 for link in links_to_post:
