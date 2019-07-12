@@ -45,16 +45,16 @@ for i, a in enumerate(links[:2]):
     if ("/story/" in a.get_attribute("href") and "nba" in a.get_attribute("href")):
         if "Lowe:" not in a.text:
             #Lowe not in title, verify further
-            verify_links.append(a)
+            verify_links.append({'url': a.get_attribute("href"), 'title': a.text})
         else:
             valid_links.append({'url': a.get_attribute("href"), 'title': a.text})
 
 #Verify that Zach is the actual author
 for link in verify_links:
-    browser.get(link.get_attribute("href"))
+    browser.get(link["url"])
     authors = browser.find_elements_by_css_selector('#article-feed .author')
     if len(authors) > 0 and "Zach Lowe" in authors[0].text:
-        valid_links.append({'url': link.get_attribute("href"), 'title': link.text})
+        valid_links.append(link)
     else:
         print("Link was not written by Zach Lowe. ESPN improperly tagged it.")
 
