@@ -7,8 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
-    found_ids = re.findall(r"id\/([0-9]+)\/", url_to_check)
-    found_ids += re.findall(r"zachlowe([0-9]+)\/", url_to_check)
+    found_ids = re.findall(r"story\?id=([0-9]+)", url_to_check)
     found_ids += re.findall(r"play\?id=([0-9]+)", url_to_check)
     if len(found_ids) != 1:
         return False
@@ -28,41 +27,29 @@ options.add_argument('--disable-gpu')
 browser = webdriver.Chrome(chrome_options=options)
 
 # Go to ESPNs search page for "lowe"
-browser.get('http://www.espn.com/search/results?q=lowe#gsc.tab=0&gsc.q=zach lowe')
+browser.get('https://www.espn.com/search/_/q/zach%20lowe')
 assert 'ESPN' in browser.title
 
-# Grab links
-links = browser.find_elements_by_css_selector('.gsc-webResult .gsc-table-result a.gs-title')
+# Grab link containers
+links = browser.find_elements_by_css_selector('a.contentItem__content,.PromoTile')
 print('Grabbing espn links')
 print(len(links))
 
-# I'll just look at the first 2 to keep it recent
+# I'll just look at the first few to keep it recent
 valid_links = []
-verify_links = []
-for i, a in enumerate(links[:2]):
-    print(i, a.text, a.get_attribute("href"))
+for i, a in enumerate(links):
+    title = a.find_element_by_css_selector('.contentItem__title,.PromoTile__Title').text
+    print(i, title, a.get_attribute("href"))
     # Only stories, no dumb videos
-    if ("/story/" in a.get_attribute("href") and "nba" in a.get_attribute("href")):
-        if "Lowe:" not in a.text:
-            #Lowe not in title, verify further
-            verify_links.append({'url': a.get_attribute("href"), 'title': a.text})
-        else:
-            valid_links.append({'url': a.get_attribute("href"), 'title': a.text})
-
-#Verify that Zach is the actual author
-for link in verify_links:
-    browser.get(link["url"])
-    authors = browser.find_elements_by_css_selector('#article-feed .author')
-    if len(authors) > 0 and "Zach Lowe" in authors[0].text:
-        valid_links.append(link)
-    else:
-        print("Link was not written by Zach Lowe. ESPN improperly tagged it.")
+    if ("/story" in a.get_attribute("href") and "nba" in a.get_attribute("href")) and 'Zach Lowe' in a.find_element_by_css_selector('.author').text:
+        valid_links.append({'url': a.get_attribute("href"), 'title': title})
+        print("found story")
 
 # Grab LowePost links
 browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
 assert 'PodCenter' in browser.title
 links = browser.find_elements_by_css_selector('.arclist-item')
-for i, listItem in enumerate(links[:2]):
+for i, listItem in enumerate(links[:3]):
     linkTag = listItem.find_element_by_css_selector('.arclist-play a:first-child')
     linkText = listItem.find_element_by_css_selector('h2')
     print(i, linkText.text, linkTag.get_attribute("href"))
@@ -76,7 +63,7 @@ subreddit = reddit.subreddit("zachlowe")
 # Get existing links in r/zachlowe
 existing_links = []
 # Only need a few. Honestly ZachLoweBot is about the only poster
-for i, submission in enumerate(subreddit.new(limit=10)):
+for i, submission in enumerate(subreddit.new(limit=25)):
     print(i, submission.title, submission.url)
     existing_links.append({'url': submission.url, 'title': submission.title})
 
