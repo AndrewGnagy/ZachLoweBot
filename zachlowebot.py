@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
     found_ids = re.findall(r"story\?id=([0-9]+)", url_to_check)
+    found_ids = re.findall(r"story\?page=zachlowe([0-9]+)", url_to_check)
     found_ids += re.findall(r"play\?id=([0-9]+)", url_to_check)
     if len(found_ids) != 1:
         return False
@@ -30,6 +31,8 @@ browser = webdriver.Chrome(chrome_options=options)
 browser.get('https://www.espn.com/search/_/q/zach%20lowe')
 assert 'ESPN' in browser.title
 
+time.sleep(2)
+
 # Grab link containers
 links = browser.find_elements_by_css_selector('a.contentItem__content,.PromoTile')
 print('Grabbing espn links')
@@ -46,6 +49,7 @@ for i, a in enumerate(links):
         print("found story")
 
 # Grab LowePost links
+print('Get LowePost links')
 browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
 assert 'PodCenter' in browser.title
 links = browser.find_elements_by_css_selector('.arclist-item')
@@ -61,6 +65,7 @@ reddit = praw.Reddit('zachlowebot')
 subreddit = reddit.subreddit("zachlowe")
 
 # Get existing links in r/zachlowe
+print('Get existing sub links')
 existing_links = []
 # Only need a few. Honestly ZachLoweBot is about the only poster
 for i, submission in enumerate(subreddit.new(limit=25)):
@@ -80,5 +85,5 @@ for link in links_to_post:
     # Wait 5 seconds in case Reddit api is slow
     time.sleep(5)
     # Comment on newly posted submission
-    comment = submission.reply('This post was generated automatically by [ZachLoweBot](https://github.com/AndrewGnagy/ZachLoweBot)')
-    comment.mod.distinguish(sticky=True)
+    #comment = submission.reply('This post was generated automatically by [ZachLoweBot](https://github.com/AndrewGnagy/ZachLoweBot)')
+    #comment.mod.distinguish(sticky=True)
