@@ -3,6 +3,8 @@ A reddit bot for scraping and posting Zach Lowe stories
 
 *ZachLoweBot doesn't hate your favorite team!*
 
+![Zach Lowe SWAMP DRAGONS](zachLoweGoZ.png)
+
 ## Setup
 First you'll need to create a praw.ini file that contains info needed to connect to Reddit. It will look something like this:
 ```
