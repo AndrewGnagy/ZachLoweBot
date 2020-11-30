@@ -8,9 +8,10 @@ from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
     found_ids = re.findall(r"story\?id=([0-9]+)", url_to_check)
-    found_ids = re.findall(r"story\?page=zachlowe([0-9]+)", url_to_check)
+    found_ids += re.findall(r"story\?page=zachlowe([0-9]+)", url_to_check)
     found_ids += re.findall(r"play\?id=([0-9]+)", url_to_check)
     if len(found_ids) != 1:
+        print('Invalid link: ' + url_to_check)
         return False
     found_id = found_ids[0]
     for links in other_links:
@@ -59,7 +60,8 @@ for i, listItem in enumerate(links[:3]):
     print(i, linkText.text, linkTag.get_attribute("href"))
     valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post - ' + linkText.text})
 
-#print(valid_links)
+print('Valid Links:')
+print(valid_links)
 
 reddit = praw.Reddit('zachlowebot')
 subreddit = reddit.subreddit("zachlowe")
@@ -68,7 +70,7 @@ subreddit = reddit.subreddit("zachlowe")
 print('Get existing sub links')
 existing_links = []
 # Only need a few. Honestly ZachLoweBot is about the only poster
-for i, submission in enumerate(subreddit.new(limit=25)):
+for i, submission in enumerate(subreddit.new(limit=35)):
     print(i, submission.title, submission.url)
     existing_links.append({'url': submission.url, 'title': submission.title})
 
@@ -81,7 +83,10 @@ print(links_to_post)
 
 # Submit the posts
 for link in links_to_post:
-    submission = subreddit.submit(link['title'], url=link['url'])
+    if 'insider' in link['url']:
+        submission = subreddit.submit('[Insider] ' + link['title'], url=link['url'])
+    else:
+        submission = subreddit.submit(link['title'], url=link['url'])
     # Wait 5 seconds in case Reddit api is slow
     time.sleep(5)
     # Comment on newly posted submission
