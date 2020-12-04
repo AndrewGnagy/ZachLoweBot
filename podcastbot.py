@@ -12,6 +12,19 @@ def not_already_posted(url_to_check, other_links):
             return False
     return True
 
+def stitcher_get_links(browser, url, title, title_assert):
+    valid_links = []
+    print('Get ' + title + ' links')
+    browser.get(url)
+    time.sleep(2)
+    assert title_assert in browser.title
+    links = browser.find_elements_by_css_selector('a.episode-link')
+    for i, link in enumerate(links[:3]):
+        linkText = link.find_element_by_css_selector('div.text-truncate')
+        print(i, linkText.text, link.get_attribute("href"))
+        valid_links.append({'url': link.get_attribute("href"), 'title': title + ' | ' + linkText.text})
+    return valid_links
+
 print('Starting ZachLoweBot')
 
 # Doing a headless browser, because that's neat
@@ -50,15 +63,12 @@ for i, link in enumerate(links[:3]):
 #*************
 # Hollinger & Duncan
 #*************
-print('Get H&D links')
-browser.get('https://www.stitcher.com/show/hollinger-duncan-nba-show')
-time.sleep(2)
-assert 'Hollinger' in browser.title
-links = browser.find_elements_by_css_selector('a.episode-link')
-for i, link in enumerate(links[:3]):
-    linkText = link.find_element_by_css_selector('div.text-truncate')
-    print(i, linkText.text, link.get_attribute("href"))
-    valid_links.append({'url': link.get_attribute("href"), 'title': 'Hollinger & Duncan | ' + linkText.text})
+valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/hollinger-duncan-nba-show', "Hollinger & Duncan", "Hollinger")
+
+#*************
+# Thinking Basketball
+#*************
+valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/thinking-basketball-podcast', "Thinking Basketball", "Thinking")
 
 print('Valid Links:')
 print(valid_links)
