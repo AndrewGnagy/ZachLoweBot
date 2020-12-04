@@ -1,5 +1,5 @@
 # ZachLoweBot
-A reddit bot for scraping and posting Zach Lowe stories  
+A reddit bot for scraping and posting Zach Lowe stories (And links of other NBA podcasts!) 
 
 *ZachLoweBot doesn't hate your favorite team!*
 
