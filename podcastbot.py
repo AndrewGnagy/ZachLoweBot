@@ -57,7 +57,9 @@ pods = [
     ["https://open.spotify.com/show/5IQEIZpEp32XFef8MyQaq7", "Hollinger & Duncan", "Hollinger"],
     ["https://open.spotify.com/show/6plYDxq6lq6V8gYSpvw783", "House of Strauss", "House"],
     ["https://open.spotify.com/show/7hVMyKCBLJ6uqIKcvKuz88", "Athletic NBA Show", "Athletic"],
-    ["https://open.spotify.com/show/6ePgqbuKwFIcdxis8oPhGU", "Book of Basketball", "Book"]
+    ["https://open.spotify.com/show/6ePgqbuKwFIcdxis8oPhGU", "Book of Basketball", "Book"],
+    ["https://open.spotify.com/show/4mOLvZqMud0JromeBgLpIh", "Brian Windhorst", "Brian"],
+    ["https://open.spotify.com/show/17GacVP62XZmK5FuOLUpd1", "The Mismatch", "Mismatch"]
 ]
 
 #*************
@@ -100,7 +102,7 @@ for pod in pods:
 
 for spot_link in spotify_links:
     for valid_link in valid_links:
-        if valid_link['title'][0:30] == spot_link['title'][0:50]:
+        if valid_link['title'][0:30] == spot_link['title'][0:30]:
             spot_link['comment'] = "Additional links: " + valid_link['url']
 
 print('Links:')
