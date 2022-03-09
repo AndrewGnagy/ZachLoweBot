@@ -85,6 +85,8 @@ print(links_to_post)
 for link in links_to_post:
     if 'insider' in link['url']:
         submission = subreddit.submit('[Insider] ' + link['title'], url=link['url'])
+    elif 'nba-awards-ballot' in link['url']:
+        continue
     else:
         submission = subreddit.submit(link['title'], url=link['url'])
     # Wait 5 seconds in case Reddit api is slow

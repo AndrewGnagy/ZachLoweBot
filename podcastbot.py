@@ -32,7 +32,7 @@ def spotify_get_links(browser, url, title, title_assert):
     time.sleep(2)
     assert title_assert in browser.title
     links = browser.find_elements_by_css_selector('[data-testid="show-all-episode-list"] a')
-    for i, link in enumerate(links[:2]):
+    for i, link in enumerate(links[:1]):
         print(i, link.text, link.get_attribute("href"))
         valid_links.append({'url': link.get_attribute("href"), 'title': title + ' | ' + link.text})
     return valid_links
@@ -65,45 +65,45 @@ pods = [
 #*************
 # Lowe Post
 #*************
-print('Get LowePost links')
-browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
-assert 'PodCenter' in browser.title
-links = browser.find_elements_by_css_selector('.arclist-item')
-for i, listItem in enumerate(links[:2]):
-    linkTag = listItem.find_element_by_css_selector('.arclist-play a:first-child')
-    linkText = listItem.find_element_by_css_selector('h2')
-    print(i, linkText.text, linkTag.get_attribute("href"))
-    valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post | ' + linkText.text})
+#print('Get LowePost links')
+#browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
+#assert 'PodCenter' in browser.title
+#links = browser.find_elements_by_css_selector('.arclist-item')
+#for i, listItem in enumerate(links[:2]):
+#    linkTag = listItem.find_element_by_css_selector('.arclist-play a:first-child')
+#    linkText = listItem.find_element_by_css_selector('h2')
+#    print(i, linkText.text, linkTag.get_attribute("href"))
+#    valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post | ' + linkText.text})
 
 #*************
 # The Mismatch
 #*************
-print('Get The Mismatch links')
-browser.get('https://www.theringer.com/the-mismatch-nba-show')
-assert 'The Mismatch' in browser.title
-links = browser.find_elements_by_css_selector('a[data-analytics-link="article"]')
-for i, link in enumerate(links[:2]):
-    print(i, link.text, link.get_attribute("href"))
-    valid_links.append({'url': link.get_attribute("href"), 'title': 'The Mismatch | ' + link.text})
+#print('Get The Mismatch links')
+#browser.get('https://www.theringer.com/the-mismatch-nba-show')
+#assert 'The Mismatch' in browser.title
+#links = browser.find_elements_by_css_selector('a[data-analytics-link="article"]')
+#for i, link in enumerate(links[:2]):
+#    print(i, link.text, link.get_attribute("href"))
+#    valid_links.append({'url': link.get_attribute("href"), 'title': 'The Mismatch | ' + link.text})
 
 #*************
 # Hollinger & Duncan
 #*************
-valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/hollinger-duncan-nba-show', "Hollinger & Duncan", "Hollinger")
+#valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/hollinger-duncan-nba-show', "Hollinger & Duncan", "Hollinger")
 
 #*************
 # Thinking Basketball
 #*************
-valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/thinking-basketball-podcast', "Thinking Basketball", "Thinking")
+#valid_links += stitcher_get_links(browser, 'https://www.stitcher.com/show/thinking-basketball-podcast', "Thinking Basketball", "Thinking")
 
 #Iterate through podcasts to get links
 for pod in pods:
     spotify_links += spotify_get_links(browser, pod[0], pod[1], pod[2])
 
-for spot_link in spotify_links:
-    for valid_link in valid_links:
-        if valid_link['title'][0:30] == spot_link['title'][0:30]:
-            spot_link['comment'] = "Additional links: " + valid_link['url']
+#for spot_link in spotify_links:
+#    for valid_link in valid_links:
+#        if valid_link['title'][0:30] == spot_link['title'][0:30]:
+#            spot_link['comment'] = "Additional links: " + valid_link['url']
 
 print('Links:')
 print(valid_links)
@@ -112,31 +112,41 @@ print(spotify_links)
 reddit = praw.Reddit('zachlowebot')
 subreddit = reddit.subreddit("nbapodcasts")
 
-# Get existing links in r/nbapodcasts
+# Get existing links in r/nbapodcasts to find newest daily thread
 print('Get existing sub links')
-existing_links = []
-for i, submission in enumerate(subreddit.new(limit=35)):
+newest_daily_thread = {}
+for i, submission in enumerate(subreddit.new(limit=50)):
     print(i, submission.title, submission.url)
-    existing_links.append({'url': submission.url, 'title': submission.title})
+    if 'Daily Thread' in submission.title:
+        newest_daily_thread = submission
+        break
+        
 
 # Check so we dont re-post and existing link
 # Neat idiomatic python bit! (I think)
-links_to_post = [new_link for new_link in spotify_links if not_already_posted(new_link['url'], existing_links)]
-print("Posting:")
-print(links_to_post)
+#links_to_post = [new_link for new_link in spotify_links if not_already_posted(new_link['url'], existing_links)]
+#print("Posting:")
+#print(links_to_post)
 
 #Get ZachLoweBot flair
 flair_id = ""
 for template in subreddit.flair.link_templates:
     if "ZachLoweBot" in template['text']:
-        flair_id = template["id"]
+        flair_id = template['id']
+
+# Comment on newly posted submission
+reply_text = '[ZachLoweBot](https://github.com/AndrewGnagy/ZachLoweBot) has gathered some links for today. Here are the most recent (but not necessarily from the past 24 hours) podcasts:  \n\n'
+for link in spotify_links:
+    reply_text += '* [' + link['title'] + '](' + link['url'] + ') \n'
+print(reply_text)
+comment = newest_daily_thread.reply(reply_text)
 
 # Submit the posts
-for link in links_to_post:
-    submission = subreddit.submit(link['title'], url=link['url'], flair_id=flair_id)
-    #Wait 5 seconds in case Reddit api is slow
-    time.sleep(5)
+#for link in links_to_post:
+#    submission = subreddit.submit(link['title'], url=link['url'], flair_id=flair_id)
+#    #Wait 5 seconds in case Reddit api is slow
+#    time.sleep(5)
     #Comment on newly posted submission
-    if 'comment' in link:
-        comment = submission.reply(link['comment'])
-        comment.mod.distinguish(sticky=True)
+#    if 'comment' in link:
+#        comment = submission.reply(link['comment'])
+#        comment.mod.distinguish(sticky=True)
