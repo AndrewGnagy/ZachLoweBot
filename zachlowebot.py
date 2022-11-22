@@ -4,6 +4,7 @@ import re
 import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 def valid_and_not_already_posted(url_to_check, other_links):
@@ -35,17 +36,17 @@ assert 'ESPN' in browser.title
 time.sleep(2)
 
 # Grab link containers
-links = browser.find_elements_by_css_selector('a.contentItem__content,.PromoTile')
+links = browser.find_elements(By.CSS_SELECTOR, 'a.contentItem__content,.PromoTile')
 print('Grabbing espn links')
 print(len(links))
 
 # I'll just look at the first few to keep it recent
 valid_links = []
 for i, a in enumerate(links):
-    title = a.find_element_by_css_selector('.contentItem__title,.PromoTile__Title').text
+    title = a.find_element(By.CSS_SELECTOR, '.contentItem__title,.PromoTile__Title').text
     print(i, title, a.get_attribute("href"))
     # Only stories, no dumb videos
-    if ("/story" in a.get_attribute("href") and "nba" in a.get_attribute("href")) and 'Zach Lowe' in a.find_element_by_css_selector('.author').text:
+    if ("/story" in a.get_attribute("href") and "nba" in a.get_attribute("href")) and 'Zach Lowe' in a.find_element(By.CSS_SELECTOR, '.author').text:
         valid_links.append({'url': a.get_attribute("href"), 'title': title})
         print("found story")
 
@@ -53,10 +54,10 @@ for i, a in enumerate(links):
 print('Get LowePost links')
 browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
 assert 'PodCenter' in browser.title
-links = browser.find_elements_by_css_selector('.arclist-item')
+links = browser.find_elements(By.CSS_SELECTOR, '.arclist-item')
 for i, listItem in enumerate(links[:3]):
-    linkTag = listItem.find_element_by_css_selector('.arclist-play a:first-child')
-    linkText = listItem.find_element_by_css_selector('h2')
+    linkTag = listItem.find_element(By.CSS_SELECTOR, '.arclist-play a:first-child')
+    linkText = listItem.find_element(By.CSS_SELECTOR, 'h2')
     print(i, linkText.text, linkTag.get_attribute("href"))
     valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post - ' + linkText.text})
 
@@ -84,7 +85,8 @@ print(links_to_post)
 # Submit the posts
 for link in links_to_post:
     if 'insider' in link['url']:
-        submission = subreddit.submit('[Insider] ' + link['title'], url=link['url'])
+        #submission = subreddit.submit('[Insider] ' + link['title'], url=link['url'])
+        print('skipping insider articles')
     elif 'nba-awards-ballot' in link['url']:
         continue
     else:
