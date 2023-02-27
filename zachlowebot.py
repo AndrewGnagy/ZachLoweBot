@@ -4,21 +4,26 @@ import re
 import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from datetime import date
 
-def valid_and_not_already_posted(url_to_check, other_links):
-    found_ids = re.findall(r"story\?id=([0-9]+)", url_to_check)
-    found_ids += re.findall(r"story\?page=zachlowe([0-9]+)", url_to_check)
-    found_ids += re.findall(r"play\?id=([0-9]+)", url_to_check)
-    if len(found_ids) != 1:
-        print('Invalid link: ' + url_to_check)
-        return False
-    found_id = found_ids[0]
-    for links in other_links:
-        if found_id in links['url']:
+def not_already_posted(title_to_check, other_titles):
+    for title in other_titles:
+        if title_to_check in title['title']:
             return False
     return True
+
+def spotify_get_links(browser, url, title, title_assert):
+    valid_links = []
+    print('Get ' + title + ' links')
+    browser.get(url)
+    time.sleep(2)
+    assert title_assert in browser.title
+    links = browser.find_elements_by_css_selector('[data-testid="show-all-episode-list"] a')
+    for i, link in enumerate(links[:1]):
+        print(i, link.text, link.get_attribute("href"))
+        valid_links.append({'url': link.get_attribute("href"), 'title': link.text})
+    return valid_links
 
 print('Starting ZachLoweBot')
 
@@ -29,70 +34,44 @@ options.add_argument('--headless')
 options.add_argument('--disable-gpu')
 browser = webdriver.Chrome(chrome_options=options)
 
-# Go to ESPNs search page for "lowe"
-browser.get('https://www.espn.com/search/_/q/zach%20lowe')
-assert 'ESPN' in browser.title
-
-time.sleep(2)
-
-# Grab link containers
-links = browser.find_elements(By.CSS_SELECTOR, 'a.contentItem__content,.PromoTile')
-print('Grabbing espn links')
-print(len(links))
-
-# I'll just look at the first few to keep it recent
 valid_links = []
-for i, a in enumerate(links):
-    title = a.find_element(By.CSS_SELECTOR, '.contentItem__title,.PromoTile__Title').text
-    print(i, title, a.get_attribute("href"))
-    # Only stories, no dumb videos
-    if ("/story" in a.get_attribute("href") and "nba" in a.get_attribute("href")) and 'Zach Lowe' in a.find_element(By.CSS_SELECTOR, '.author').text:
-        valid_links.append({'url': a.get_attribute("href"), 'title': title})
-        print("found story")
+spotify_links = []
 
-# Grab LowePost links
-print('Get LowePost links')
-browser.get('http://www.espn.com/espnradio/podcast/archive/_/id/10528553')
-assert 'PodCenter' in browser.title
-links = browser.find_elements(By.CSS_SELECTOR, '.arclist-item')
-for i, listItem in enumerate(links[:3]):
-    linkTag = listItem.find_element(By.CSS_SELECTOR, '.arclist-play a:first-child')
-    linkText = listItem.find_element(By.CSS_SELECTOR, 'h2')
-    print(i, linkText.text, linkTag.get_attribute("href"))
-    valid_links.append({'url': linkTag.get_attribute("href"), 'title': 'Lowe Post - ' + linkText.text})
+pods = [
+    ["https://open.spotify.com/show/2mZHt3zBxyIuc0PYLdDDkr", "Lowe Post", "Lowe"]
+]
 
-print('Valid Links:')
+#Iterate through podcasts to get links
+for pod in pods:
+    spotify_links += spotify_get_links(browser, pod[0], pod[1], pod[2])
+
+print('Links:')
 print(valid_links)
+print(spotify_links)
 
 reddit = praw.Reddit('zachlowebot')
 subreddit = reddit.subreddit("zachlowe")
 
-# Get existing links in r/zachlowe
-print('Get existing sub links')
 existing_links = []
 # Only need a few. Honestly ZachLoweBot is about the only poster
-for i, submission in enumerate(subreddit.new(limit=35)):
+for i, submission in enumerate(subreddit.new(limit=10)):
     print(i, submission.title, submission.url)
     existing_links.append({'url': submission.url, 'title': submission.title})
+        
+print(existing_links)
 
 # Check so we dont re-post and existing link
 # Neat idiomatic python bit! (I think)
-links_to_post = [new_link for new_link in valid_links if valid_and_not_already_posted(new_link['url'], existing_links)]
+links_to_post = [new_link for new_link in spotify_links if not_already_posted(new_link['title'], existing_links)]
 print("Posting:")
 print(links_to_post)
 
-
 # Submit the posts
 for link in links_to_post:
-    if 'insider' in link['url']:
-        #submission = subreddit.submit('[Insider] ' + link['title'], url=link['url'])
-        print('skipping insider articles')
-    elif 'nba-awards-ballot' in link['url']:
-        continue
-    else:
-        submission = subreddit.submit(link['title'], url=link['url'])
-    # Wait 5 seconds in case Reddit api is slow
-    time.sleep(5)
-    # Comment on newly posted submission
-    #comment = submission.reply('This post was generated automatically by [ZachLoweBot](https://github.com/AndrewGnagy/ZachLoweBot)')
-    #comment.mod.distinguish(sticky=True)
+   submission = subreddit.submit("Lowe Post - " + link['title'] + ": " + date.today().strftime("%B %d, %Y"), url=link['url'], flair_id=flair_id)
+   #Wait 5 seconds in case Reddit api is slow
+   time.sleep(5)
+    #Comment on newly posted submission
+#    if 'comment' in link:
+#        comment = submission.reply(link['comment'])
+#        comment.mod.distinguish(sticky=True)
