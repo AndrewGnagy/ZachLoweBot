@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from datetime import date
+from selenium.webdriver.common.by import By
 
 def not_already_posted(title_to_check, other_titles):
     for title in other_titles:
@@ -19,7 +20,7 @@ def spotify_get_links(browser, url, title, title_assert):
     browser.get(url)
     time.sleep(2)
     assert title_assert in browser.title
-    links = browser.find_elements_by_css_selector('[data-testid="show-all-episode-list"] a')
+    links = browser.find_elements(By.CSS_SELECTOR, '[data-testid="show-all-episode-list"] a')
     for i, link in enumerate(links[:1]):
         print(i, link.text, link.get_attribute("href"))
         valid_links.append({'url': link.get_attribute("href"), 'title': link.text})
@@ -68,7 +69,7 @@ print(links_to_post)
 
 # Submit the posts
 for link in links_to_post:
-   submission = subreddit.submit("Lowe Post - " + link['title'] + ": " + date.today().strftime("%B %d, %Y"), url=link['url'], flair_id=flair_id)
+   submission = subreddit.submit("Lowe Post - " + link['title'] + ": " + date.today().strftime("%B %d, %Y"), url=link['url'])
    #Wait 5 seconds in case Reddit api is slow
    time.sleep(5)
     #Comment on newly posted submission
