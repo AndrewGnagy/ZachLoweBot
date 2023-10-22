@@ -1,4 +1,4 @@
-# ZachLoweBot
+# ZachLoweBot Cloud
 A reddit bot for scraping and posting Zach Lowe stories (And links of other NBA podcasts!) 
 
 *ZachLoweBot doesn't hate your favorite team!*
@@ -33,7 +33,7 @@ client_id={YOUR_CLIENT_ID}
 client_secret={YOUR_SECRET}
 password={YOUR_PASSWORD}
 username={YOUR_USERNAME}
-user_agent=ZachLoweBot v1
+user_agent=ZachLoweBot v2
 ```
 
 Next, you'll want to set up a cron job to execute this. I do once every 6 hours: `0 */6 * * *` 
