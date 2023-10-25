@@ -1,0 +1,12 @@
+steps:
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+  - gcloud
+  - functions
+  - deploy
+  - LoweBot
+  - --source=.
+  - --entry-point=main
+  - --trigger-topic=lowebot
+  - --runtime=python37
+  - --env-vars-file=.env
