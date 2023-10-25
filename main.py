@@ -1,11 +1,12 @@
 #!/usr/bin/python
 import praw
 import os
-import re
 import time
-import requests
-from bs4 import BeautifulSoup
 from datetime import date
+import requests
+import base64
+from dotenv import load_dotenv
+load_dotenv()
 
 def not_already_posted(title_to_check, other_titles):
     for title in other_titles:
@@ -13,26 +14,41 @@ def not_already_posted(title_to_check, other_titles):
             return False
     return True
 
-def spotify_get_links(url, title, title_assert):
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, "html.parser")
-    valid_links = []
-    print('Get ' + title + ' links')
-    assert title_assert in soup.title.text
-    links = soup.select('[data-testid="show-all-episode-list"] a')
-    for i, link in enumerate(links[:1]):
-        print(i, link.text, link.get("href"))
-        valid_links.append({'url': link.get("href"), 'title': link.text})
-    return valid_links
+def spotify_get_links(id, title, title_assert):
+    
+    client_id = os.getenv("SP_CLIENT_ID")
+    client_secret = os.getenv("SP_CLIENT_SECRET")
 
-def main():
+    encoded = base64.b64encode((client_id + ":" + client_secret).encode("ascii")).decode("ascii")
+
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + encoded
+    }
+    
+    payload = {
+        "grant_type": "client_credentials"
+    }
+    
+    response = requests.post("https://accounts.spotify.com/api/token", data=payload, headers=headers)
+    print(response.text)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + response.json()['access_token']
+    }
+    response = requests.get('https://api.spotify.com/v1/shows/' + id + '/episodes?limit=1', headers=headers)
+    print(response.json())
+    return [{'url': 'https://open.spotify.com/episode/' + x['id'], 'title': x['name']} for x in response.json()['items']]
+
+def main(x, y):
     print('Starting ZachLoweBot')
 
     valid_links = []
     spotify_links = []
 
     pods = [
-        ["https://open.spotify.com/show/2mZHt3zBxyIuc0PYLdDDkr", "Lowe Post", "Lowe"]
+        ["2mZHt3zBxyIuc0PYLdDDkr", "Lowe Post", "Lowe"]
     ]
 
     #Iterate through podcasts to get links
@@ -43,14 +59,11 @@ def main():
     print(valid_links)
     print(spotify_links)
 
-    if "LB_CLIENT_ID" in os.environ:
-        reddit = praw.Reddit(
-            client_id=os.getenv("LB_CLIENT_ID"),
-            client_secret=os.getenv("LB_CLIENT_SECRET"),
-            user_agent=os.getenv("LB_USER_AGENT"),
-        )
-    else:
-        reddit = praw.Reddit('zachlowebot')
+    reddit = praw.Reddit(
+        client_id=os.getenv("LB_CLIENT_ID"),
+        client_secret=os.getenv("LB_CLIENT_SECRET"),
+        user_agent=os.getenv("LB_USER_AGENT"),
+    )
     subreddit = reddit.subreddit("zachlowe")
 
     existing_links = []
