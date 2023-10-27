@@ -63,6 +63,8 @@ def main(x, y):
         client_id=os.getenv("LB_CLIENT_ID"),
         client_secret=os.getenv("LB_CLIENT_SECRET"),
         user_agent=os.getenv("LB_USER_AGENT"),
+        username=os.getenv("LB_USERNAME"),
+        password=os.getenv("LB_PASSWORD"),
     )
     subreddit = reddit.subreddit("zachlowe")
 
