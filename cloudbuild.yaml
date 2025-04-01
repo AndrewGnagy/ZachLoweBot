@@ -8,5 +8,5 @@ steps:
   - --source=.
   - --entry-point=main
   - --trigger-topic=lowebot
-  - --runtime=python37
+  - --runtime=python312
   - --env-vars-file=.env

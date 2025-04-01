@@ -48,7 +48,7 @@ def main(x, y):
     spotify_links = []
 
     pods = [
-        ["2mZHt3zBxyIuc0PYLdDDkr", "Lowe Post", "Lowe"]
+        ["7odspoIkzPJSTsiwffW20f", "The Zach Lowe Show", "Lowe"]
     ]
 
     #Iterate through podcasts to get links
@@ -79,6 +79,11 @@ def main(x, y):
     # Check so we dont re-post and existing link
     # Neat idiomatic python bit! (I think)
     links_to_post = [new_link for new_link in spotify_links if not_already_posted(new_link['title'], existing_links)]
+    # Manual ignores 
+    ignore_links = [
+        "https://open.spotify.com/episode/1JAIhTQewiR3UwysSNr7Uc"
+    ]
+    links_to_post = [new_link for new_link in links_to_post if new_link['url'] not in ignore_links]
     print("Posting:")
     print(links_to_post)
 
